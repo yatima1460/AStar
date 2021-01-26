@@ -30,14 +30,14 @@ to not have failing CPU branch prediction in the hot path.
 // ============ CONFIGS ============
 
 /*
-How much the cross product between the (start,end) and (current,end)
+How much the dot product between the (start,end) and (current,end)
 matters in the heuristics, multiplied by this value,
 WARNING: don't make it too big otherwise you risk to overshoot
-WARNING: using the cross product can increase performance but paths
+WARNING: using the dot product can increase performance but paths
 could look "strange" in a game, not really human-like in some cases
 better to use for things where no graphics is involved
 */
-#define CROSS_PRODUCT_WEIGHT 0.0005f
+#define DOT_PRODUCT_WEIGHT 0.0005f
 
 /*
 How much of the world area to scan from the end before starting
@@ -126,10 +126,10 @@ int PartialFindPath(const int nStartIndex, const int nStartX, const int nStartY,
         const int xCurrent = nCurrentIndex % nMapWidth;
         const int yCurrent = nCurrentIndex / nMapWidth;
 
-        // Cross product between (start,end) and (current,end), used later for heuristics
+        // Dot product between (start,end) and (current,end), used later for heuristics
         const auto nDeltaXCurrentTarget = xCurrent - nTargetX;
         const auto nDeltaYCurrentTarget = yCurrent - nTargetY;
-        const auto cross = abs(nDeltaXCurrentTarget * nDeltaYStartTarget - nDeltaXStartTarget * nDeltaYCurrentTarget);
+        const auto dot = abs(nDeltaXCurrentTarget * nDeltaYStartTarget - nDeltaXStartTarget * nDeltaYCurrentTarget);
 
         for (int i = 0; i < 4; ++i)
         {
@@ -148,9 +148,9 @@ int PartialFindPath(const int nStartIndex, const int nStartX, const int nStartY,
                 // save new better cost
                 nodeMetadata[neighbourIndex].nDistance = gCurrent;
 
-                // f = dijkstra + Manhattan + cross product between (start,end) and (current,end)
+                // f = dijkstra + Manhattan + dot product between (start,end) and (current,end)
                 const auto Manhattan = fabs(static_cast<float>(new_x - nTargetX)) + fabs(static_cast<float>(new_y - nTargetY));
-                nodeMetadata[neighbourIndex].nScore = gCurrent + Manhattan + cross * CROSS_PRODUCT_WEIGHT;
+                nodeMetadata[neighbourIndex].nScore = gCurrent + Manhattan + dot * DOT_PRODUCT_WEIGHT;
 
                 // better cost so add it to open
                 openNodesPriorityQueue.push(neighbourIndex);
