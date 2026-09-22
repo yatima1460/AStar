@@ -1,58 +1,22 @@
-cmake_minimum_required(VERSION 3.10)
+include(FetchContent)
 
-project(DP_Example)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -DGOOGLE_TEST")
-if (CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -DGOOGLE_TEST")
-endif()
+# Pin GoogleTest v1.16.0 to an exact commit; library-only builds do not fetch it.
+FetchContent_Declare(googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG 6910c9d9165801d8827d628cb72eb7ea9dd538c5
+)
 
-include(CTest)
-set(CMAKE_CXX_STANDARD 17)
-
-if (CMAKE_VERSION VERSION_LESS 3.2)
-    set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
-else ()
-    set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
-endif ()
-
-include(DownloadProject.cmake)
-download_project(PROJ googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG release-1.10.0
-        ${UPDATE_DISCONNECTED_IF_AVAILABLE}
-        )
-
-
-
-
-# Prevent GoogleTest from overriding our compiler/linker options
-# when building with Visual Studio
+# Keep the parent project's MSVC runtime choice.
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
-add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
-
-# When using CMake 2.8.11 or later, header path dependencies
-# are automatically added to the gtest and gmock targets.
-# For earlier CMake versions, we have to explicitly add the
-# required directories to the header search path ourselves.
-if (CMAKE_VERSION VERSION_LESS 2.8.11)
-    include_directories("${gtest_SOURCE_DIR}/include"
-            "${gmock_SOURCE_DIR}/include")
-endif ()
-
-
-file(GLOB SOURCES *.cpp ../Source/*.cpp)
-
-# Trivial example using gtest and gmock
-add_executable(Pathfinder ${SOURCES})
-
-include_directories("../Include")
-
-
-target_link_libraries(Pathfinder gtest gmock_main)
+add_executable(Pathfinder Main.cpp Test.cpp)
+target_compile_features(Pathfinder PRIVATE cxx_std_17)
+set_target_properties(Pathfinder PROPERTIES CXX_EXTENSIONS OFF)
+target_link_libraries(Pathfinder PRIVATE Pathfinding GTest::gtest)
 
 include(GoogleTest)
-
-
-gtest_discover_tests(Pathfinder)
-
+# The StaticAnalyzer tests in Test.cpp contain hard-coded /home/... paths.
+# Run only behavioral tests through CTest until those sources are made portable.
+gtest_discover_tests(Pathfinder TEST_FILTER "Pathfinding.*")

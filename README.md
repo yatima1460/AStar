@@ -26,7 +26,25 @@ Check [Tests](/Tests) to see how it's used
 
 # Build
 
-It's C++17, Just use CMake, no dependencies needed
+The library uses C++17 and CMake 3.22 or newer. A library-only build has no
+external dependencies:
+
+```sh
+cmake -S . -B build/library -DBUILD_TESTING=OFF
+cmake --build build/library --parallel
+```
+
+To build and run the pathfinding tests, CMake fetches GoogleTest v1.16.0:
+
+```sh
+cmake -S . -B build/tests -DBUILD_TESTING=ON
+cmake --build build/tests --parallel
+ctest --test-dir build/tests --output-on-failure
+```
+
+The two `StaticAnalyzer` tests in `Tests/Test.cpp` use paths under
+`/home/.../Desktop/AStar`, so CTest excludes them. They can be run manually
+after adapting those paths to a local checkout.
 
 # License
 
